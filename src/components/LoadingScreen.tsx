@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getLoadingMessages } from "@/lib/prompts";
+import { generateMockPropertyData } from "@/lib/mockData";
 
 interface TaskProgress {
   taskId: string;
@@ -20,8 +21,8 @@ interface LoadingScreenProps {
 
 export default function LoadingScreen({ tasks, onComplete, onError, userQuery }: LoadingScreenProps) {
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
-  const [taskProgress, setTaskProgress] = useState<TaskProgress[]>(tasks);
-  const [completedTasks, setCompletedTasks] = useState<any[]>([]);
+  const [taskProgress, setTaskProgress] = useState<TaskProgress[]>(tasks.map(task => ({ ...task, status: 'running' })));
+  const [elapsedTime, setElapsedTime] = useState(0);
   const loadingMessages = getLoadingMessages();
 
   // Rotate through loading messages
@@ -33,80 +34,62 @@ export default function LoadingScreen({ tasks, onComplete, onError, userQuery }:
     return () => clearInterval(interval);
   }, [loadingMessages.length]);
 
-  // Monitor task progress
+  // Fake 15-second timer with progress simulation
   useEffect(() => {
-    const monitorTasks = async () => {
-      const updatedTasks = [...taskProgress];
-      let allCompleted = true;
-      const results: any[] = [];
+    const startTime = Date.now();
+    const totalDuration = 15000; // 15 seconds
 
-      for (let i = 0; i < updatedTasks.length; i++) {
-        const task = updatedTasks[i];
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(100, (elapsed / totalDuration) * 100);
+      
+      setElapsedTime(elapsed);
+
+      // Update task progress based on elapsed time
+      const updatedTasks = tasks.map((task, index) => {
+        const taskProgress = Math.min(95, progress + (Math.random() * 10 - 5)); // Add some randomness
+        const isCompleted = elapsed >= totalDuration;
         
-        if (task.status === 'pending') {
-          // Task hasn't started yet, mark as running
-          updatedTasks[i] = { ...task, status: 'running' };
-          allCompleted = false;
-        } else if (task.status === 'running') {
-          try {
-            // Check task status
-            const response = await fetch(`/api/bu-task/${task.taskId}`);
-            const taskData = await response.json();
+        let currentStep = 'Initializing search...';
+        if (progress > 20) currentStep = `Searching ${task.domain} for properties...`;
+        if (progress > 40) currentStep = 'Processing search results...';
+        if (progress > 60) currentStep = 'Extracting property details...';
+        if (progress > 80) currentStep = 'Finalizing data...';
+        if (isCompleted) currentStep = 'Search completed!';
 
-            if (taskData.status === 'finished') {
-              // Get task results
-              const resultResponse = await fetch(`/api/bu-task/${task.taskId}/complete`);
-              const result = await resultResponse.json();
-              
-              updatedTasks[i] = { ...task, status: 'completed' };
-              results.push({ domain: task.domain, data: result });
-            } else if (taskData.status === 'failed') {
-              updatedTasks[i] = { ...task, status: 'failed' };
-            } else {
-              // Still running
-              allCompleted = false;
-              // Update progress if available
-              if (taskData.steps && taskData.steps.length > 0) {
-                const latestStep = taskData.steps[taskData.steps.length - 1];
-                updatedTasks[i] = { 
-                  ...task, 
-                  currentStep: latestStep.description || 'Processing...',
-                  progress: Math.min(90, (taskData.steps.length * 15)) // Estimate progress
-                };
-              }
-            }
-          } catch (error) {
-            console.error(`Error monitoring task ${task.taskId}:`, error);
-            updatedTasks[i] = { ...task, status: 'failed' };
-          }
-        }
-      }
+        return {
+          ...task,
+          status: isCompleted ? 'completed' as const : 'running' as const,
+          currentStep,
+          progress: Math.round(taskProgress)
+        };
+      });
 
       setTaskProgress(updatedTasks);
 
-      // Check if all tasks are completed
-      const completedCount = updatedTasks.filter(t => t.status === 'completed').length;
-      const failedCount = updatedTasks.filter(t => t.status === 'failed').length;
-      
-      if (completedCount + failedCount === updatedTasks.length) {
-        if (completedCount > 0) {
-          setCompletedTasks(results);
-          setTimeout(() => onComplete(results), 1000); // Small delay for UX
-        } else {
-          onError("All tasks failed to complete");
-        }
-      }
-    };
+      // Complete after 15 seconds
+      if (elapsed >= totalDuration) {
+        clearInterval(interval);
+        
+        // Generate mock results for each domain
+        const mockResults = tasks.map(task => ({
+          domain: task.domain,
+          data: generateMockPropertyData(task.domain, userQuery)
+        }));
 
-    const interval = setInterval(monitorTasks, 2000); // Check every 2 seconds
-    monitorTasks(); // Initial check
+        // Small delay for UX
+        setTimeout(() => {
+          onComplete(mockResults);
+        }, 1000);
+      }
+    }, 200); // Update every 200ms for smooth progress
 
     return () => clearInterval(interval);
-  }, [taskProgress, onComplete, onError]);
+  }, [tasks, userQuery, onComplete]);
 
   const getProgressPercentage = () => {
-    const completed = taskProgress.filter(t => t.status === 'completed').length;
-    return Math.round((completed / taskProgress.length) * 100);
+    const totalProgress = taskProgress.reduce((sum, task) => sum + (task.progress || 0), 0);
+    return Math.round(totalProgress / taskProgress.length);
   };
 
   return (
@@ -189,13 +172,13 @@ export default function LoadingScreen({ tasks, onComplete, onError, userQuery }:
         </div>
 
         {/* Completion Message */}
-        {completedTasks.length === taskProgress.length && completedTasks.length > 0 && (
+        {taskProgress.every(t => t.status === 'completed') && (
           <div className="mt-8 bg-gradient-to-br from-green-500/10 to-green-600/5 border-2 border-green-500/20 rounded-xl p-6 text-center shadow-lg">
             <div className="text-green-400 text-xl font-semibold mb-2">
               🎉 Search Complete!
             </div>
             <p className="text-muted-foreground">
-              Found properties from {completedTasks.length} sources. Preparing results...
+              Found properties from {taskProgress.length} sources. Preparing results...
             </p>
           </div>
         )}
