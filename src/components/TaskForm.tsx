@@ -193,7 +193,7 @@ export default function TaskForm({ onTaskCreated, onError }: TaskFormProps) {
                 type="button"
                 onClick={addCustomDomain}
                 disabled={!customDomain.trim()}
-                className="px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
+                className="px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-medium transition-all duration-200 shadow-lg hover:shadow-xl cursor-pointer"
               >
                 Add
               </button>
@@ -205,7 +205,7 @@ export default function TaskForm({ onTaskCreated, onError }: TaskFormProps) {
         <button
           type="submit"
           disabled={isLoading || !formData.task}
-          className="w-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground py-4 px-6 rounded-xl hover:from-primary/90 hover:to-primary/70 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-semibold flex items-center justify-center gap-3 text-lg shadow-2xl hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300"
+          className="w-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground py-4 px-6 rounded-xl hover:from-primary/90 hover:to-primary/70 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-semibold flex items-center justify-center gap-3 text-lg shadow-2xl hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 cursor-pointer"
         >
           {isLoading ? "Searching Properties..." : "Start Property Search"}
           <svg 
