@@ -20,14 +20,14 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground dark">
+    <div className="min-h-screen bg-background text-foreground dark pt-26">
       <div className="container mx-auto px-4 py-8 max-w-3xl">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <h1 className="text-3xl font-black text-balance">Property Finder</h1>
+            <h1 className="text-3xl font-black text-balance">Real Estate Finder</h1>
           </div>
           <p className="text-muted-foreground">
-            AI-powered property search automation. Find the perfect property using intelligent browser automation.
+            AI-powered real estate search automation. Find the perfect property using intelligent browser automation.
           </p>
         </div>
 

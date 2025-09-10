@@ -23,9 +23,9 @@ export default function TaskForm({ onTaskCreated, onError }: TaskFormProps) {
     llm: "gpt-4.1-mini",
   });
   const [sources, setSources] = useState<Source[]>([
-    { id: "nepremicnine", name: "nepremicnine.net", domain: "nepremicnine.net", checked: true },
-    { id: "bolha", name: "bolha.si/nepremicnine", domain: "bolha.si", checked: false },
-    { id: "google", name: "Google (free search)", domain: "google.com", checked: false },
+    { id: "nepremicnine", name: "nepremicnine.net", domain: "nepremicnine.net", checked: true, deletable: true },
+    { id: "bolha", name: "bolha.si/nepremicnine", domain: "bolha.si", checked: false, deletable: true },
+    { id: "google", name: "Google (free search)", domain: "google.com", checked: false, deletable: true },
   ]);
   const [customDomain, setCustomDomain] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -84,24 +84,71 @@ export default function TaskForm({ onTaskCreated, onError }: TaskFormProps) {
     setSources((prev) => prev.filter((source) => source.id !== sourceId));
   };
 
+  const promptCards = [
+    {
+      title: "Apartments",
+      description: "Find apartments in your area",
+      prompt: "Find 2-3 bedroom apartments in downtown area under $800k with parking"
+    },
+    {
+      title: "Houses",
+      description: "Search for houses",
+      prompt: "Find 3-4 bedroom houses with garden in residential area under $1.2M"
+    },
+    {
+      title: "Commercial",
+      description: "Business properties",
+      prompt: "Find office spaces or retail properties in city center under $2000/month"
+    }
+  ];
+
+  const handlePromptClick = (prompt: string) => {
+    setFormData(prev => ({ ...prev, task: prompt }));
+  };
+
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const textarea = e.target;
+    handleChange("task", textarea.value);
+    
+    // Auto-resize textarea
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 350) + 'px';
+  };
+
   return (
     <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {promptCards.map((card, index) => (
+          <button
+            key={index}
+            onClick={() => handlePromptClick(card.prompt)}
+            className="p-6 bg-gradient-to-br from-card to-muted/30 border-2 border-primary/20 rounded-xl hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 text-left shadow-lg"
+          >
+            <h3 className="font-semibold text-foreground mb-2 text-lg">{card.title}</h3>
+            <p className="text-sm text-muted-foreground">{card.description}</p>
+          </button>
+        ))}
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-6">
-        <input
-          type="text"
+        <textarea
           value={formData.task}
-          onChange={(e) => handleChange("task", e.target.value)}
-          placeholder="Describe the property you want to find (e.g., 'Find 3-bedroom apartments in downtown area under $500k')..."
-          className="w-full p-4 bg-background border border-border rounded-md focus:ring-2 focus:ring-ring focus:border-transparent text-foreground placeholder:text-muted-foreground"
+          onChange={handleTextareaChange}
+          placeholder="Describe the property you want to find..."
+          className="w-full p-6 bg-gradient-to-br from-card to-muted/30 border-2 border-primary/40 rounded-xl focus:ring-4 focus:ring-primary/30 focus:border-primary text-foreground placeholder:text-muted-foreground resize-none min-h-[80px] max-h-[450px] overflow-y-auto shadow-2xl focus:shadow-2xl focus:shadow-primary/20 transition-all duration-300 text-lg font-medium"
+          rows={1}
           required
         />
 
-      <div className="bg-card border border-border rounded-lg">
-        <div className="p-6 border-b border-border">
-          <h2 className="text-lg font-semibold">Sources</h2>
+      <div className="bg-gradient-to-br from-card to-muted/30 border-2 border-primary/20 rounded-xl shadow-lg">
+        <div className="p-6 border-b border-primary/20">
+          <h2 className="text-lg font-semibold text-foreground">Sources</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Select the websites our AI engine will crawl to find properties for you
+          </p>
         </div>
         <div className="p-6">
-          <div className="space-y-3">
+          <div className="space-y-3 mb-6">
             {sources.map((source) => (
               <div key={source.id} className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
@@ -131,7 +178,7 @@ export default function TaskForm({ onTaskCreated, onError }: TaskFormProps) {
             ))}
           </div>
 
-          <div className="pt-4 border-t border-border">
+          <div className="pt-4 border-t border-primary/20">
             <label className="text-sm font-medium mb-2 block text-foreground">Add Custom Domain</label>
             <div className="flex gap-2">
               <input
@@ -140,13 +187,13 @@ export default function TaskForm({ onTaskCreated, onError }: TaskFormProps) {
                 value={customDomain}
                 onChange={(e) => setCustomDomain(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && addCustomDomain()}
-                className="flex-1 p-2 bg-background border border-border rounded-md focus:ring-2 focus:ring-ring focus:border-transparent text-foreground placeholder:text-muted-foreground"
+                className="flex-1 p-3 bg-background border-2 border-primary/20 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary text-foreground placeholder:text-muted-foreground transition-all duration-200"
               />
               <button
                 type="button"
                 onClick={addCustomDomain}
                 disabled={!customDomain.trim()}
-                className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed"
+                className="px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
               >
                 Add
               </button>
@@ -158,11 +205,11 @@ export default function TaskForm({ onTaskCreated, onError }: TaskFormProps) {
         <button
           type="submit"
           disabled={isLoading || !formData.task}
-          className="w-full bg-primary text-primary-foreground py-3 px-4 rounded-md hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
+          className="w-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground py-4 px-6 rounded-xl hover:from-primary/90 hover:to-primary/70 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-semibold flex items-center justify-center gap-3 text-lg shadow-2xl hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300"
         >
           {isLoading ? "Searching Properties..." : "Start Property Search"}
           <svg 
-            className="h-5 w-5" 
+            className="h-6 w-6" 
             fill="none" 
             stroke="currentColor" 
             viewBox="0 0 24 24"
