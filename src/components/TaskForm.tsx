@@ -3,9 +3,16 @@
 import { useState } from "react";
 import { CreateTaskRequest } from "@/types/browser-use";
 import { browserUseClient } from "@/lib/browser-use-client";
+import { createRealEstateSystemPrompt } from "@/lib/prompts";
+
+interface TaskProgress {
+  taskId: string;
+  domain: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+}
 
 interface TaskFormProps {
-  onTaskCreated: (taskId: string) => void;
+  onTasksCreated: (tasks: TaskProgress[], searchQuery: string) => void;
   onError: (error: string) => void;
 }
 
@@ -17,15 +24,16 @@ interface Source {
   deletable?: boolean;
 }
 
-export default function TaskForm({ onTaskCreated, onError }: TaskFormProps) {
+export default function TaskForm({ onTasksCreated, onError }: TaskFormProps) {
   const [formData, setFormData] = useState<Partial<CreateTaskRequest>>({
     task: "",
     llm: "gpt-4.1-mini",
   });
   const [sources, setSources] = useState<Source[]>([
     { id: "nepremicnine", name: "nepremicnine.net", domain: "nepremicnine.net", checked: true, deletable: true },
-    { id: "bolha", name: "bolha.si/nepremicnine", domain: "bolha.si", checked: false, deletable: true },
+    { id: "bolha", name: "bolha.si", domain: "bolha.si/nepremicnine", checked: false, deletable: true },
     { id: "google", name: "Google (free search)", domain: "google.com", checked: false, deletable: true },
+    { id: "Facebook Marketplace", name: "Facebook Marketplace", domain: "facebook.com", checked: false, deletable: true },
   ]);
   const [customDomain, setCustomDomain] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -36,23 +44,46 @@ export default function TaskForm({ onTaskCreated, onError }: TaskFormProps) {
 
     try {
       const selectedSources = sources.filter((s) => s.checked);
-      const allDomains = selectedSources.map((s) => s.domain);
 
-      if (allDomains.length === 0) {
+      if (selectedSources.length === 0) {
         onError("Please select at least one source.");
         return;
       }
 
-      const taskData: CreateTaskRequest = {
-        ...formData,
-        task: formData.task || "",
-        allowedDomains: allDomains,
-      } as CreateTaskRequest;
+      if (!formData.task?.trim()) {
+        onError("Please enter a search query.");
+        return;
+      }
 
-      const { id } = await browserUseClient.createTask(taskData);
-      onTaskCreated(id);
+      // Create separate tasks for each domain
+      const taskPromises = selectedSources.map(async (source) => {
+        const systemPrompt = createRealEstateSystemPrompt(source.domain, formData.task!);
+        
+        // Special handling for Google - no allowedDomains or startUrl restrictions
+        const isGoogle = source.domain === 'google.com';
+        
+        const taskData: CreateTaskRequest = {
+          task: systemPrompt,
+          llm: "gpt-4.1-mini",
+          ...(isGoogle ? {} : {
+            allowedDomains: [source.domain], // Only allow this specific domain
+            startUrl: `https://${source.domain}` // Start directly on the domain
+          })
+        };
+
+        const { id } = await browserUseClient.createTask(taskData);
+        return {
+          taskId: id,
+          domain: source.domain,
+          status: 'pending' as const
+        };
+      });
+
+      // Wait for all tasks to be created
+      const createdTasks = await Promise.all(taskPromises);
+      onTasksCreated(createdTasks, formData.task!);
     } catch (error) {
-      onError(error instanceof Error ? error.message : "Failed to create task");
+      onError(error instanceof Error ? error.message : "Failed to create tasks");
     } finally {
       setIsLoading(false);
     }
@@ -207,7 +238,7 @@ export default function TaskForm({ onTaskCreated, onError }: TaskFormProps) {
           disabled={isLoading || !formData.task}
           className="w-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground py-4 px-6 rounded-xl hover:from-primary/90 hover:to-primary/70 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-semibold flex items-center justify-center gap-3 text-lg shadow-2xl hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 cursor-pointer"
         >
-          {isLoading ? "Searching Properties..." : "Start Property Search"}
+          {isLoading ? "Creating Search Tasks..." : "Start Property Search"}
           <svg 
             className="h-6 w-6" 
             fill="none" 
