@@ -27,7 +27,7 @@ export default function Home() {
             <h1 className="text-3xl font-black text-balance">Real Estate Finder</h1>
           </div>
           <p className="text-muted-foreground">
-            AI-powered real estate search automation. Find the perfect property using intelligent browser automation.
+            AI-powered real estate search. Find the perfect property using intelligent automation.
           </p>
         </div>
 
