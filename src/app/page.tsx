@@ -20,35 +20,33 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background text-foreground dark">
+      <div className="container mx-auto px-4 py-8 max-w-3xl">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Property Finder
-          </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <h1 className="text-3xl font-black text-balance">Property Finder</h1>
+          </div>
+          <p className="text-muted-foreground">
             AI-powered property search automation. Find the perfect property using intelligent browser automation.
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+          <div className="mb-6 bg-destructive/15 border border-destructive/20 text-destructive px-4 py-3 rounded-md">
             <strong>Error:</strong> {error}
           </div>
         )}
 
         {success && (
-          <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
+          <div className="mb-6 bg-green-500/15 border border-green-500/20 text-green-600 px-4 py-3 rounded-md">
             <strong>Success:</strong> {success}
           </div>
         )}
 
-        <div className="max-w-4xl mx-auto mb-8">
-          <TaskForm 
-            onTaskCreated={handleTaskCreated}
-            onError={handleError}
-          />
-        </div>
+        <TaskForm 
+          onTaskCreated={handleTaskCreated}
+          onError={handleError}
+        />
       </div>
     </div>
   );
