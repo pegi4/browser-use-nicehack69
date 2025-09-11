@@ -78,7 +78,7 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8 max-w-3xl">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <h1 className="text-3xl font-black text-balance">Real Estate Finder</h1>
+            <h1 className="text-3xl font-black text-balance">Real Estate Agent</h1>
           </div>
           <p className="text-muted-foreground">
             AI-powered real estate search. Find the perfect property using intelligent automation.

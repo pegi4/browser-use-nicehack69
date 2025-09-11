@@ -63,7 +63,7 @@ Remember: Return ONLY the JSON object, no additional text or explanations.`;
 };
 
 export const getLoadingMessages = () => [
-  "🏠 Initializing property search...",
+  "🏠 Initializing Real Estate search...",
   "🔍 Analyzing search criteria...",
   "🌐 Connecting to real estate websites...",
   "📋 Processing property listings...",
